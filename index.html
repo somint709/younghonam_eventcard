@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영호남마불 — event cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0B1628;
+    --surface: #131f35;
+    --gold: #C9973A;
+    --gold-light: #F0C060;
+    --quiz-bg: #1A3A35;
+    --quiz-accent: #2DB5A3;
+    --quiz-text: #A8F0E8;
+    --move-bg: #221A38;
+    --move-accent: #8B6ED4;
+    --move-text: #C8B8F8;
+    --crisis-bg: #3A1A1A;
+    --crisis-accent: #D64045;
+    --crisis-text: #F8B0B2;
+    --text: #E8EAF0;
+    --muted: #6B7A9A;
+  }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* ── 배경 별빛 ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(1px 1px at 20% 15%, rgba(255,255,255,.35) 0%, transparent 100%),
+      radial-gradient(1px 1px at 75% 30%, rgba(255,255,255,.25) 0%, transparent 100%),
+      radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 60%, rgba(255,255,255,.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 10% 85%, rgba(255,255,255,.2) 0%, transparent 100%),
+      radial-gradient(2px 2px at 60% 10%, rgba(201,151,58,.4) 0%, transparent 100%),
+      radial-gradient(2px 2px at 30% 45%, rgba(45,181,163,.3) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 40px 20px 24px;
+    width: 100%;
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+    opacity: .85;
+  }
+  header h1 {
+    font-size: clamp(28px, 5vw, 46px);
+    font-weight: 900;
+    letter-spacing: -1px;
+    color: #fff;
+    line-height: 1.1;
+  }
+  header h1 span {
+    color: var(--gold-light);
+  }
+  header p {
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ── 카드 타입 범례 ── */
+  .legend {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 20px 28px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--muted);
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 20px;
+    padding: 5px 12px;
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+
+  /* ── 메인 영역 ── */
+  main {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 900px;
+    padding: 0 20px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  /* ── 덱 (카드 더미) ── */
+  .deck-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .deck-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .deck-stack {
+    position: relative;
+    width: 200px;
+    height: 290px;
+    cursor: pointer;
+  }
+  .deck-card {
+    position: absolute;
+    width: 200px;
+    height: 290px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #1a2c4e 0%, #0e1c32 100%);
+    border: 1.5px solid rgba(201,151,58,.3);
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .deck-card:nth-child(1) { transform: rotate(-4deg) translateY(4px); }
+  .deck-card:nth-child(2) { transform: rotate(-1.5deg) translateY(2px); }
+  .deck-card:nth-child(3) { transform: rotate(1deg); }
+  .deck-stack:hover .deck-card:nth-child(3) { transform: rotate(1deg) translateY(-6px); box-shadow: 0 20px 60px rgba(201,151,58,.25); }
+  .deck-stack:active .deck-card:nth-child(3) { transform: rotate(1deg) translateY(-2px) scale(.98); }
+
+  .deck-card-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    overflow: hidden;
+  }
+  .deck-card-face::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(45deg, transparent, transparent 12px, rgba(201,151,58,.04) 12px, rgba(201,151,58,.04) 13px);
+  }
+  .deck-card-face .card-logo {
+    font-size: 36px;
+    position: relative;
+    z-index: 1;
+  }
+  .deck-card-face .card-title-text {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--gold);
+    text-transform: uppercase;
+    position: relative;
+    z-index: 1;
+  }
+  .deck-card-face .card-subtitle {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    position: relative;
+    z-index: 1;
+  }
+  .deck-count-badge {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    background: rgba(201,151,58,.15);
+    border: 1px solid rgba(201,151,58,.3);
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+  }
+
+  .draw-btn {
+    padding: 14px 40px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--bg);
+    background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+    border: none;
+    border-radius: 40px;
+    cursor: pointer;
+    letter-spacing: .5px;
+    box-shadow: 0 4px 24px rgba(201,151,58,.4);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .draw-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(201,151,58,.5); }
+  .draw-btn:active { transform: translateY(0); }
+  .draw-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+  /* ── 카드 플립 영역 ── */
+  .card-flip-zone {
+    perspective: 1200px;
+    width: 100%;
+    max-width: 480px;
+    display: none;
+  }
+  .card-flip-zone.visible { display: block; }
+
+  .card-flipper {
+    position: relative;
+    width: 100%;
+    padding-bottom: 65%; /* aspect ratio */
+    transform-style: preserve-3d;
+    transition: transform .65s cubic-bezier(.4, 0, .2, 1);
+    cursor: pointer;
+  }
+  .card-flipper.flipped { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* 앞면 */
+  .card-front {
+    background: linear-gradient(135deg, #1a2c4e 0%, #0e1c32 100%);
+    border: 2px solid rgba(201,151,58,.35);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    overflow: hidden;
+  }
+  .card-front::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(45deg, transparent, transparent 16px, rgba(201,151,58,.03) 16px, rgba(201,151,58,.03) 17px);
+  }
+  .card-front .front-icon { font-size: 44px; position: relative; z-index: 1; }
+  .card-front .front-hint {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    position: relative; z-index: 1;
+  }
+  .card-front .front-number {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gold);
+    opacity: .6;
+    position: relative; z-index: 1;
+  }
+
+  /* 뒷면 공통 */
+  .card-back {
+    transform: rotateY(180deg);
+    border-radius: 20px;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+    position: absolute;
+    inset: 0;
+  }
+  .card-back::after {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.04);
+    pointer-events: none;
+  }
+
+  /* 타입별 뒷면 */
+  .card-back.quiz {
+    background: linear-gradient(135deg, var(--quiz-bg) 0%, #0f2420 100%);
+    border: 2px solid rgba(45,181,163,.4);
+  }
+  .card-back.move {
+    background: linear-gradient(135deg, var(--move-bg) 0%, #150e28 100%);
+    border: 2px solid rgba(139,110,212,.4);
+  }
+  .card-back.crisis {
+    background: linear-gradient(135deg, var(--crisis-bg) 0%, #200e0e 100%);
+    border: 2px solid rgba(214,64,69,.4);
+  }
+
+  .card-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    align-self: flex-start;
+  }
+  .quiz .card-type-badge { background: rgba(45,181,163,.15); color: var(--quiz-accent); border: 1px solid rgba(45,181,163,.3); }
+  .move .card-type-badge { background: rgba(139,110,212,.15); color: var(--move-accent); border: 1px solid rgba(139,110,212,.3); }
+  .crisis .card-type-badge { background: rgba(214,64,69,.15); color: var(--crisis-accent); border: 1px solid rgba(214,64,69,.3); }
+
+  .card-event-title {
+    font-size: clamp(16px, 3vw, 20px);
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.2;
+  }
+  .card-content {
+    font-size: 13px;
+    line-height: 1.65;
+    color: rgba(232,234,240,.85);
+    flex: 1;
+  }
+  .card-reward {
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  .quiz .card-reward { background: rgba(45,181,163,.12); color: var(--quiz-text); border: 1px solid rgba(45,181,163,.25); }
+  .move .card-reward { background: rgba(139,110,212,.12); color: var(--move-text); border: 1px solid rgba(139,110,212,.25); }
+  .crisis .card-reward { background: rgba(214,64,69,.12); color: var(--crisis-text); border: 1px solid rgba(214,64,69,.25); }
+
+  .answer-reveal {
+    display: none;
+    margin-top: 4px;
+    font-size: 12px;
+    background: rgba(255,255,255,.05);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: rgba(232,234,240,.7);
+    border-left: 3px solid var(--quiz-accent);
+  }
+  .answer-reveal.shown { display: block; }
+  .answer-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--quiz-accent);
+    letter-spacing: .5px;
+    padding: 0;
+    align-self: flex-start;
+    opacity: .8;
+    transition: opacity .15s;
+  }
+  .answer-toggle:hover { opacity: 1; }
+
+  .flip-hint {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 8px;
+    letter-spacing: 1px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+  /* ── 뽑은 카드 기록 ── */
+  .history-section {
+    width: 100%;
+  }
+  .history-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .history-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  .history-chip {
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .history-chip.quiz { background: rgba(45,181,163,.1); color: var(--quiz-accent); border: 1px solid rgba(45,181,163,.2); }
+  .history-chip.move { background: rgba(139,110,212,.1); color: var(--move-accent); border: 1px solid rgba(139,110,212,.2); }
+  .history-chip.crisis { background: rgba(214,64,69,.1); color: var(--crisis-accent); border: 1px solid rgba(214,64,69,.2); }
+
+  .reset-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,.1);
+    color: var(--muted);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px;
+    padding: 7px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+    display: block;
+    margin: 16px auto 0;
+  }
+  .reset-btn:hover { border-color: rgba(255,255,255,.25); color: var(--text); }
+
+  /* ── 완료 메시지 ── */
+  .deck-empty {
+    text-align: center;
+    padding: 32px 20px;
+    display: none;
+  }
+  .deck-empty.visible { display: block; }
+  .deck-empty .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .deck-empty h2 { font-size: 20px; font-weight: 900; margin-bottom: 8px; }
+  .deck-empty p { font-size: 13px; color: var(--muted); }
+
+  /* 모바일 */
+  @media (max-width: 520px) {
+    .card-flipper { padding-bottom: 140%; }
+    .card-back { padding: 18px 20px; gap: 10px; }
+    .card-event-title { font-size: 15px; }
+    .card-content { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-eyebrow">🌏 중학교 3학년 사회 · 영·호남 공업 지역</div>
+  <h1>영호남마불<br><span>이벤트 카드</span></h1>
+  <p>카드를 뽑고, 뒤집어서 결과를 확인하세요<br>총 20장 · 퀴즈 8 · 이동 4 · 글로벌 위기 8</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#2DB5A3"></div>지리·산업 퀴즈</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8B6ED4"></div>이동 및 휴식</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#D64045"></div>글로벌 위기</div>
+</div>
+
+<main>
+  <!-- 덱 -->
+  <div class="deck-zone" id="deckZone">
+    <div class="deck-label">이벤트 카드 덱</div>
+    <div class="deck-stack" id="deckStack" onclick="drawCard()">
+      <div class="deck-card"></div>
+      <div class="deck-card"></div>
+      <div class="deck-card">
+        <div class="deck-card-face">
+          <div class="card-logo">🃏</div>
+          <div class="card-title-text">Event Card</div>
+          <div class="card-subtitle">클릭하여 뽑기</div>
+          <div class="deck-count-badge" id="deckCount">20장</div>
+        </div>
+      </div>
+    </div>
+    <button class="draw-btn" id="drawBtn" onclick="drawCard()">카드 뽑기</button>
+  </div>
+
+  <div class="deck-empty" id="deckEmpty">
+    <div class="empty-icon">🎉</div>
+    <h2>모든 카드를 뽑았습니다!</h2>
+    <p>덱을 다시 섞어서 새로운 게임을 시작하세요.</p>
+  </div>
+
+  <!-- 플립 카드 -->
+  <div class="card-flip-zone" id="flipZone">
+    <div class="card-flipper" id="cardFlipper" onclick="flipCard()">
+      <div class="card-face card-front" id="cardFront">
+        <div class="front-icon">❓</div>
+        <div class="front-hint">카드를 탭하여 뒤집기</div>
+        <div class="front-number" id="frontNumber"></div>
+      </div>
+      <div class="card-face card-back" id="cardBack">
+        <!-- JS로 채워짐 -->
+      </div>
+    </div>
+    <div class="flip-hint" id="flipHint">↑ 카드를 탭하여 결과 확인</div>
+  </div>
+
+  <!-- 기록 -->
+  <div class="history-section" id="historySection" style="display:none">
+    <div class="history-title">뽑은 카드 기록</div>
+    <div class="history-grid" id="historyGrid"></div>
+    <button class="reset-btn" onclick="resetDeck()">🔀 덱 다시 섞기</button>
+  </div>
+</main>
+
+<script>
+const CARDS = [
+  {
+    id: 1, type: 'quiz',
+    title: '포항·광양의 비밀',
+    content: '철광석과 유연탄을 수입하기 편리한 해안가에 공장이 자리 잡는 공업 입지 유형을 무엇이라고 할까요?',
+    reward: '✅ 정답 시 자본금 +1 토큰 획득!',
+    answer: '정답: 임해 공업 (또는 원료 지향성 입지)'
+  },
+  {
+    id: 2, type: 'quiz',
+    title: '여수의 파이프라인',
+    content: '원유를 정제하여 플라스틱, 섬유 등의 기초 원료를 만드는 여수 지역의 대표적인 중화학 공업은 무엇일까요?',
+    reward: '✅ 정답 시 자본금 +1 토큰 획득!',
+    answer: '정답: 석유화학 공업'
+  },
+  {
+    id: 3, type: 'quiz',
+    title: '글로벌 환경 약속',
+    content: '기업이 사용하는 전력의 100%를 태양광, 풍력 등 재생에너지로만 충당하겠다는 국제적인 캠페인의 이름은 무엇일까요?',
+    reward: '✅ 정답 시 자본금 +1 토큰 획득!',
+    answer: '정답: RE100'
+  },
+  {
+    id: 4, type: 'quiz',
+    title: '거제의 뼈대',
+    content: '포항이나 광양에서 만든 두꺼운 철판(후판)을 가져와 거대한 배를 조립하여 만드는 거제 지역의 핵심 산업은 무엇일까요?',
+    reward: '✅ 정답 시 자본금 +1 토큰 획득!',
+    answer: '정답: 조선업 (또는 조선·해양플랜트 공업)'
+  },
+  {
+    id: 5, type: 'quiz',
+    title: '공장을 위한 공장',
+    content: '영남권의 다른 공업 도시에 필요한 부품과 대형 설비, 기계류를 공급하며 발전한 배후 계획 공업 도시는 어디일까요?',
+    reward: '✅ 정답 시 자본금 +1 토큰 획득!',
+    answer: '정답: 창원'
+  },
+  {
+    id: 6, type: 'quiz',
+    title: '내륙의 소비지',
+    content: '영남권 임해 공업 지역과 달리, 호남 내륙에 위치하여 풍부한 노동력을 바탕으로 자동차와 가전제품을 생산하는 소비지 지향성 공업 도시는 어디일까요?',
+    reward: '✅ 정답 시 자본금 +1 토큰 획득!',
+    answer: '정답: 광주'
+  },
+  {
+    id: 7, type: 'quiz',
+    title: '첨단 산업의 이탈',
+    content: '과거 구미의 전자 공업처럼 발전하던 지방의 첨단 산업 공장과 연구소들이 수도권으로 이동하면서 지방의 산업 시설이 비어가는 현상을 무엇이라고 할까요?',
+    reward: '✅ 정답 시 자본금 +1 토큰 획득!',
+    answer: '정답: 산업 공동화 (또는 지방 공동화)'
+  },
+  {
+    id: 8, type: 'quiz',
+    title: '수출의 관문',
+    content: '영남권과 호남권에서 생산된 대규모 중화학 제품과 컨테이너 화물들을 전 세계로 수출하는 남해안의 핵심 무역항 2곳은 어디일까요?',
+    reward: '✅ 정답 시 자본금 +1 토큰 획득!',
+    answer: '정답: 부산항, 광양항 (둘 중 하나만 말해도 인정)'
+  },
+  {
+    id: 9, type: 'move',
+    title: '제주도로 떠나는 힐링 휴가',
+    content: '과도한 업무와 학업에서 벗어나 아름다운 섬 제주도로 휴가를 떠납니다! 비행기를 타고 이동하느라 다음 1턴 동안 쉬어갑니다.',
+    reward: '⏸️ 다음 1턴 휴식'
+  },
+  {
+    id: 10, type: 'move',
+    title: '남해안 크루즈 여행',
+    content: '여수에서 출발해 거제를 거쳐 부산까지 이어지는 한려해상 국립공원 크루즈 선박에 탑승했습니다. 남해안의 아름다운 풍경을 감상하세요!',
+    reward: '🚢 앞으로 3칸 전진!'
+  },
+  {
+    id: 11, type: 'move',
+    title: '글로벌 비즈니스 출장',
+    content: '영·호남 공업 지역의 수출 계약을 성사시키기 위해 미국 뉴욕으로 긴급 출장을 떠납니다. 시차 적응을 위해 다음 1턴 동안 쉬어갑니다.',
+    reward: '⏸️ 다음 1턴 휴식'
+  },
+  {
+    id: 12, type: 'move',
+    title: 'KTX 경전선 개통',
+    content: '영남과 호남을 연결하는 고속철도망이 확충되어 지역 간 이동이 매우 빨라졌습니다. 주사위를 한 번 더 굴릴 기회를 얻습니다!',
+    reward: '🎲 주사위 보너스 1회!'
+  },
+  {
+    id: 13, type: 'crisis',
+    title: '탄소배출권 가격 폭등',
+    content: '정부의 탄소 중립 규제가 강화되면서 공장을 돌리기 위해 사야 하는 탄소배출권 가격이 크게 올랐습니다.',
+    reward: '💸 자본금 -1 토큰 반납'
+  },
+  {
+    id: 14, type: 'crisis',
+    title: '중동 분쟁과 국제 유가 폭등',
+    content: '중동 지역의 지정학적 불안으로 원유 수입 가격이 급등했습니다. 석유를 원료로 쓰는 울산과 여수의 공장들이 타격을 입었습니다.',
+    reward: '💸 자본금 -2 토큰 반납'
+  },
+  {
+    id: 15, type: 'crisis',
+    title: '호주발 유연탄 공급 중단',
+    content: '이상 기후로 유연탄 광산이 침수되어 포항과 광양의 제철소로 들어오는 원료 공급망이 마비되었습니다.',
+    reward: '💸 자본금 -1 토큰 반납'
+  },
+  {
+    id: 16, type: 'crisis',
+    title: 'EU의 탄소국경세 부과',
+    content: '탄소 배출이 많은 제품에 세금을 매기는 EU의 탄소국경조정제도(CBAM)가 시행되었습니다. 영·호남 제조 기업들의 수출 관세가 증가했습니다.',
+    reward: '💸 자본금 -1 토큰 반납'
+  },
+  {
+    id: 17, type: 'crisis',
+    title: '홍해 해운 물류망 마비',
+    content: '주요 해상 항로인 홍해 내부의 위기로 대형 화물선들이 아프리카로 우회하게 되면서 배 삯(해운 운임)이 폭등했습니다.',
+    reward: '💸 자본금 -2 토큰 반납'
+  },
+  {
+    id: 18, type: 'crisis',
+    title: '환경부 산단 오염물질 특별 단속',
+    content: '영·호남 산단 지역에 가스 및 매연 배출 단속이 실시되었습니다. 일부 노후 공장들이 기준치를 초과하여 벌금을 부과받았습니다.',
+    reward: '💸 자본금 -1 토큰 반납'
+  },
+  {
+    id: 19, type: 'crisis',
+    title: '글로벌 보호무역주의 장벽',
+    content: '주요 선진국들이 자국 산업을 보호하기 위해 한국산 자동차와 철강에 높은 보복 관세를 매겼습니다. 수출 실적이 악화되었습니다.',
+    reward: '💸 자본금 -1 토큰 반납'
+  },
+  {
+    id: 20, type: 'crisis',
+    title: '핵심 정밀 부품 공급망 붕괴',
+    content: '해외 부품 공장의 파업으로 창원과 구미의 기계·전자 공장에 들어올 정밀 센서 수급이 중단되어 라인이 멈췄습니다.',
+    reward: '💸 자본금 -2 토큰 반납'
+  }
+];
+
+const TYPE_META = {
+  quiz:   { label: '지리·산업 퀴즈', icon: '🧠' },
+  move:   { label: '이동 및 휴식',   icon: '✈️' },
+  crisis: { label: '글로벌 위기',    icon: '⚠️' }
+};
+
+let deck = [];
+let history = [];
+let currentCard = null;
+let isFlipped = false;
+let isAnimating = false;
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function initDeck() {
+  deck = shuffle([...CARDS]);
+  history = [];
+  currentCard = null;
+  isFlipped = false;
+  updateUI();
+}
+
+function drawCard() {
+  if (isAnimating || deck.length === 0) return;
+  isAnimating = true;
+
+  const card = deck.pop();
+  currentCard = card;
+  history.push(card);
+  isFlipped = false;
+
+  // 플립 카드 세팅
+  const flipper = document.getElementById('cardFlipper');
+  flipper.classList.remove('flipped');
+
+  document.getElementById('frontNumber').textContent = `이벤트 ${String(card.id).padStart(2, '0')}`;
+
+  buildCardBack(card);
+
+  // 덱 영역 보이기
+  document.getElementById('flipZone').classList.add('visible');
+  document.getElementById('flipHint').style.display = 'block';
+
+  updateDeckCount();
+  updateHistory();
+
+  setTimeout(() => { isAnimating = false; }, 400);
+}
+
+function buildCardBack(card) {
+  const back = document.getElementById('cardBack');
+  const meta = TYPE_META[card.type];
+
+  back.className = `card-face card-back ${card.type}`;
+
+  let answerHTML = '';
+  if (card.type === 'quiz' && card.answer) {
+    answerHTML = `
+      <button class="answer-toggle" onclick="toggleAnswer(event)">💡 정답 보기</button>
+      <div class="answer-reveal" id="answerReveal">${card.answer}</div>
+    `;
+  }
+
+  back.innerHTML = `
+    <div class="card-type-badge">${meta.icon} ${meta.label}</div>
+    <div class="card-event-title">${card.title}</div>
+    <div class="card-content">${card.content}</div>
+    <div class="card-reward">${card.reward}</div>
+    ${answerHTML}
+  `;
+}
+
+function toggleAnswer(e) {
+  e.stopPropagation();
+  const el = document.getElementById('answerReveal');
+  const btn = e.target;
+  if (el.classList.contains('shown')) {
+    el.classList.remove('shown');
+    btn.textContent = '💡 정답 보기';
+  } else {
+    el.classList.add('shown');
+    btn.textContent = '▲ 정답 숨기기';
+  }
+}
+
+function flipCard() {
+  if (isAnimating || !currentCard) return;
+  const flipper = document.getElementById('cardFlipper');
+  const hint = document.getElementById('flipHint');
+
+  if (!isFlipped) {
+    flipper.classList.add('flipped');
+    hint.style.display = 'none';
+    isFlipped = true;
+  } else {
+    flipper.classList.remove('flipped');
+    hint.style.display = 'block';
+    isFlipped = false;
+    // 정답 숨기기
+    const ar = document.getElementById('answerReveal');
+    if (ar) {
+      ar.classList.remove('shown');
+      const btn = document.querySelector('.answer-toggle');
+      if (btn) btn.textContent = '💡 정답 보기';
+    }
+  }
+}
+
+function updateDeckCount() {
+  const count = deck.length;
+  document.getElementById('deckCount').textContent = `${count}장`;
+  const btn = document.getElementById('drawBtn');
+  const stack = document.getElementById('deckStack');
+
+  if (count === 0) {
+    btn.disabled = true;
+    document.getElementById('deckZone').style.display = 'none';
+    document.getElementById('deckEmpty').classList.add('visible');
+  } else {
+    btn.disabled = false;
+  }
+}
+
+function updateHistory() {
+  const section = document.getElementById('historySection');
+  const grid = document.getElementById('historyGrid');
+
+  if (history.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+
+  grid.innerHTML = history.map(c => {
+    const meta = TYPE_META[c.type];
+    return `<span class="history-chip ${c.type}">${meta.icon} ${c.title}</span>`;
+  }).join('');
+}
+
+function updateUI() {
+  document.getElementById('deckCount').textContent = `${deck.length}장`;
+  document.getElementById('drawBtn').disabled = false;
+  document.getElementById('deckZone').style.display = 'flex';
+  document.getElementById('deckZone').style.flexDirection = 'column';
+  document.getElementById('deckZone').style.alignItems = 'center';
+  document.getElementById('deckZone').style.gap = '20px';
+  document.getElementById('deckEmpty').classList.remove('visible');
+  document.getElementById('flipZone').classList.remove('visible');
+  document.getElementById('historySection').style.display = 'none';
+  document.getElementById('historyGrid').innerHTML = '';
+}
+
+function resetDeck() {
+  initDeck();
+}
+
+// 초기화
+initDeck();
+</script>
+</body>
+</html>
